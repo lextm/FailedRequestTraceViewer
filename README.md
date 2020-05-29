@@ -1,5 +1,5 @@
-# FailedTraceRequestViewer
-Windows program for more easily viewing Failed Trace Request requests (WPF) 
+# FailedRequestTraceViewer
+Windows program for more easily viewing Failed Request Trace files (WPF) 
 
 Initial version uploaded, very rough but hopefully adds value.
 
@@ -7,7 +7,7 @@ There is no toolbar, so there are three 'MessageBox' style pop ups at the beginn
 
 Question 1: "Do you want to add Failed Request Trace locations based on this computer's local IIS configuration?  (note, UI will be updated as new traces appear automatically)".
 
-Generally you would want to say 'Yes' because you are in the middle of generating Failed Trace Requests in IIS.  It will read the web sites configuration of where the Failed Request Traces are being written, and load requests automatically from there.  It will be sorted based on the request start time.  The program will also start listening for requests from those folders, and the UI will automatically be updated.  There is no 'capture filters' here, so it could get volumunous.  Note also that despite IIS configuration of how many requests to save, we will start caching them in memory, and therefore the number of requests that we load is potentially unlimited.  Once the program ends, of course, you won't be able to see those requests again if they are no longer on the hard drive.  As a result, do not leave this running and forget about it, or it will end up consuming all the memory.
+Generally you would want to say 'Yes' because you are in the middle of generating Failed Request Trace files in IIS.  It will read the web sites configuration of where the Failed Request Traces are being written, and load requests automatically from there.  It will be sorted based on the request start time.  The program will also start listening for requests from those folders, and the UI will automatically be updated.  There is no 'capture filters' here, so it could get volumunous.  Note also that despite IIS configuration of how many requests to save, we will start caching them in memory, and therefore the number of requests that we load is potentially unlimited.  Once the program ends, of course, you won't be able to see those requests again if they are no longer on the hard drive.  As a result, do not leave this running and forget about it, or it will end up consuming all the memory.
 
 Question 2: "Do you want to add a local folder where Failed Request Traces exist?  (note 1: the UI will not automatically update, note 2: if the traces are from a different computer, the displayed Site information may be incorrect, note 3: times will appear in local time zone.)"
 
