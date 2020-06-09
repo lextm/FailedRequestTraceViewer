@@ -13,7 +13,7 @@ namespace FailedRequestTraceViewer2
     public class FailedRequestTraceFile
     {
         public string sID { get; set; }
-        public string sTime { get; set; }
+        public DateTime sTime { get; set; }
         public string sTrigger { get; set; }
         private string _sResult;
         public string sResult { 
@@ -59,7 +59,7 @@ namespace FailedRequestTraceViewer2
     }
     public class FRTUtil
     {
-        bool fFinishedImporting = false;
+        //bool fFinishedImporting = true;// false change to true
 
         Object lockAddingFRTFiles;
         public List<string> frtCustomFolderPaths { get; set; } // note we will *not* subscribe to changes here
@@ -79,6 +79,9 @@ namespace FailedRequestTraceViewer2
 
             initialRequestFiles = new Dictionary<string, FailedRequestTraceFile>();
         }
+
+        // returns list of full paths to failed request locations (doesn't include subfolders)
+        // no user interaction
 
         // returns false if program should end.
         public bool GetFailedRequestLocations()
@@ -189,11 +192,11 @@ namespace FailedRequestTraceViewer2
                 {
                     sRet = File.ReadAllText(sPath);
                     fDone = true;
-                } catch (System.IO.IOException eeeks)
+                } catch (System.IO.IOException eeek)
                 {
                     // likely file is in use
                     System.Threading.Thread.Sleep(25);
-                } catch (Exception eeeks)
+                } catch (Exception eeek)
                 {
                     fDone = true;
                 }
@@ -227,7 +230,7 @@ namespace FailedRequestTraceViewer2
                 // matching node is found
                 fFailedRequestFile = true; // in case a try/catch occurs, we know it reached this point
                 XmlNode sTC = doc.SelectSingleNode("/failedRequest/a:Event/a:System/a:TimeCreated", nsmgr);
-                outputFRTObject.sTime = sTC.Attributes["SystemTime"].Value;
+                outputFRTObject.sTime = DateTime.Parse( sTC.Attributes["SystemTime"].Value);
                 Uri frturl = new Uri(nxml.Attributes["url"].Value);
                 outputFRTObject.sHost = frturl.Host;
                 outputFRTObject.sProtocol = frturl.Scheme;
@@ -350,7 +353,7 @@ namespace FailedRequestTraceViewer2
                 return true;
 
             }
-            catch (Exception eek) // any exception just invalidates the file
+            catch (Exception eeek) // any exception just invalidates the file
             {
                 if (fFailedRequestFile)
                 {
@@ -382,7 +385,7 @@ namespace FailedRequestTraceViewer2
                     if (initialRequestFiles.ContainsKey(sPathToFile))
                         return false;
                     initialRequestFiles.Add(sPathToFile, frtTraceFile);
-                    DateTime creationtime = DateTime.Parse(frtTraceFile.sTime);
+                    DateTime creationtime = frtTraceFile.sTime;//DateTime.Parse(frtTraceFile.sTime);
 
                     // Resolve conflict if two different requests have the same time stamp
                     // Note that this is only important during initial import... 

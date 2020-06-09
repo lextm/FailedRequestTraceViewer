@@ -7,31 +7,50 @@
         mc:Ignorable="d"
         Title="Failed Request Trace Viewer" Height="450" Width="800"
         SizeChanged="update_size">
-    <StackPanel Name="stacker_panell" >
-        <Grid >
-            <DataGrid x:Name="wpfGrid" SelectionMode="Single" SelectionChanged="Row_SelectionChanged"  ItemsSource="{Binding FailedRequestTracesInGrid}" AutoGenerateColumns="False" IsReadOnly="True">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="ID" Binding="{Binding sID}"/>
-                <DataGridTextColumn Header="Time" Binding="{Binding sTime}"/>
-                <DataGridTextColumn Header="TimeTaken" Binding="{Binding sTimeTaken}"/>
-                <DataGridTextColumn Header="Result" Binding="{Binding sResult}"/>
-                <DataGridTextColumn Header="Site" Binding="{Binding sSite}"/>
-                <DataGridTextColumn Header="Pool" Binding="{Binding sAppPool}"/>
-                <DataGridTextColumn Header="User" Binding="{Binding sUser}"/>
-                <DataGridTextColumn Header="Protocol" Binding="{Binding sProtocol}"/>
-                <DataGridTextColumn Header="Method" Binding="{Binding sMethod}"/>
-                <DataGridTextColumn Header="Host" Binding="{Binding sHost}"/>
-                <DataGridTextColumn Header="URL"   Width="*" Binding="{Binding sURL}"/>
-                <DataGridTextColumn Header="Body" Binding="{Binding sBody}"/>
-                <DataGridTextColumn Header="Content-Type" Binding="{Binding sContentType}"/>
-            </DataGrid.Columns>
-            <DataGrid.Resources>
-                <Style TargetType="DataGridRow">
-                    <EventSetter Event="MouseDoubleClick" Handler="Row_DoubleClick"/>
-                </Style>
-                </DataGrid.Resources>
-        </DataGrid>
-    </Grid>
-    <WebBrowser Name="wbSample" ></WebBrowser>
-    </StackPanel>
+    <Border Name="wpfStackBorder" BorderBrush="AliceBlue" BorderThickness="0">
+        <StackPanel Name="stacker_panell" >
+            <Menu Name="wpfMenu" DockPanel.Dock="Top" VerticalAlignment="Top" >
+                <MenuItem Header="_File">
+                    <MenuItem Header="_Capture Traffic" Click="mnuCaptureTraffic_Click" IsCheckable="True" IsChecked="True"/>
+                    <MenuItem Header="_Import Folder..." Click="mnuImportFolder_Click" />
+                    <Separator />
+                    <MenuItem Header="_Exit" Click="mnuExit_Click" />
+                </MenuItem>
+                <MenuItem Header="_Edit">
+                    <MenuItem Header="C_lear" Click="mnuClearView_Click" />
+                </MenuItem>
+                <MenuItem Header="_View">
+                    <MenuItem Header="_Select Columns..." Click="mnuEditColumns_Click"/>
+                    <MenuItem Header="_Web Preview" Click="mnuViewWebview_Click" IsCheckable="True" IsChecked="True"/>
+                </MenuItem>
+            </Menu>
+            <Grid VerticalAlignment="Center" >
+                <DataGrid x:Name="wpfGrid" SelectionMode="Single" SelectionChanged="Row_SelectionChanged"  ItemsSource="{Binding FailedRequestTracesInGrid}" AutoGenerateColumns="False" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding sID}"/>
+                        <DataGridTextColumn Header="Time" Binding="{Binding sTime}"/>
+                        <DataGridTextColumn Header="TimeTaken" Binding="{Binding sTimeTaken}"/>
+                        <DataGridTextColumn Header="Result" Binding="{Binding sResult}"/>
+                        <DataGridTextColumn Header="Site" Binding="{Binding sSite}"/>
+                        <DataGridTextColumn Header="Pool" Binding="{Binding sAppPool}"/>
+                        <DataGridTextColumn Header="User" Binding="{Binding sUser}"/>
+                        <DataGridTextColumn Header="Protocol" Binding="{Binding sProtocol}"/>
+                        <DataGridTextColumn Header="Method" Binding="{Binding sMethod}"/>
+                        <DataGridTextColumn Header="Host" Binding="{Binding sHost}"/>
+                        <DataGridTextColumn Header="URL"   Width="*" Binding="{Binding sURL}"/>
+                        <DataGridTextColumn Header="Body" Binding="{Binding sBody}"/>
+                        <DataGridTextColumn Header="Content-Type" Binding="{Binding sContentType}"/>
+                    </DataGrid.Columns>
+                    <DataGrid.Resources>
+                        <Style TargetType="DataGridRow">
+                            <EventSetter Event="MouseDoubleClick" Handler="Row_DoubleClick"/>
+                        </Style>
+                    </DataGrid.Resources>
+                </DataGrid>
+            </Grid>
+            <Border Name="wpfBrowserBorder" BorderBrush="OrangeRed" BorderThickness="0" VerticalAlignment="Stretch">
+                <WebBrowser Name="wbSample" ></WebBrowser>
+            </Border>
+        </StackPanel>
+    </Border>
 </Window>

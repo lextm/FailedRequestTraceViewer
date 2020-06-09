@@ -27,8 +27,19 @@ namespace FailedRequestTraceViewer2
     {
         private readonly SynchronizationContext _syncContext;
 
-        bool fFinishedImporting = false;
+        WatchFolders _foldernotificationhelper = new WatchFolders();
+        bool fFinishedImporting = true; // false change to true
         public int iD = 1;
+        public bool fWebviewVisible = true;
+        bool _captureTraffic = true;
+        bool CaptureTraffic {
+            get { return _captureTraffic; }
+            set { _captureTraffic = value;
+                if (value == true)
+                    _foldernotificationhelper.RefreshIISFolders();
+
+            }
+        }
 
         Object lockAddToObservableCollection;
         FRTUtil frtfolders = new FRTUtil();
@@ -39,6 +50,12 @@ namespace FailedRequestTraceViewer2
         // Define the event handlers.
         private void WatchOnChanged(object source, FileSystemEventArgs e)
         {
+        
+
+            if (CaptureTraffic == false)
+            {
+                return;
+            }
             // Specify what is done when a file is changed, created, or deleted.
             lock (lockAddToObservableCollection)
             {
@@ -57,17 +74,27 @@ namespace FailedRequestTraceViewer2
             //Console.WriteLine($"File: {e.FullPath} {e.ChangeType}");
         }
 
-        // returns true if an item was added
-        // caller is responsible for locking the array.
-        public void update_size(object sender, RoutedEventArgs e)
+        public void resize_controls()
         {
-            var a = this.ActualHeight;
+            var a = wpfStackBorder.ActualHeight;
             var b = this.ActualWidth;
             var c = this.Height;
             var d = this.Width;
             //stacker_panell.Height = a;
-            wpfGrid.Height = a / 2;
-            wbSample.Height = a / 2;
+            var desiredheight = fWebviewVisible?(a - wpfMenu.ActualHeight) / 2: (a - wpfMenu.ActualHeight); // - System.Windows.SystemParameters.WindowCaptionHeight*22/39) / 2;
+
+            wpfGrid.Height = desiredheight;
+            wpfBrowserBorder.Height = fWebviewVisible? desiredheight:0;
+            //wbSample.Height = double.NaN; // (a - wpfMenu.ActualHeight) / 2;
+            wbSample.Height = fWebviewVisible?  desiredheight:0;
+
+        }
+        // returns true if an item was added
+        // caller is responsible for locking the array.
+        public void update_size(object sender, RoutedEventArgs e)
+        {
+            resize_controls();
+
         }
         public bool AddFailedRequestTraceFileToGrid(string sPathToFile)
         {
@@ -94,7 +121,7 @@ namespace FailedRequestTraceViewer2
 
         }
 
-        public void WatchThisPath(string sPath, bool fWatch)
+/*        public void WatchThisPath(string sPath, bool fWatch)
         {
             if (!fWatch)
             {
@@ -136,6 +163,7 @@ namespace FailedRequestTraceViewer2
             }
             return;
         }
+        */
 
         private void Row_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -147,7 +175,7 @@ namespace FailedRequestTraceViewer2
             {
                 File.Copy(System.IO.Path.GetDirectoryName(item.sFilePath) + "\\freb.xsl", System.IO.Path.GetTempPath() + "\\freb.xsl");
             }
-            catch (Exception eek)
+            catch (Exception eeek)
             {
                 // ignore all exceptions -- whether source file doesn't exist, or target file already exists.
             }
@@ -165,7 +193,7 @@ namespace FailedRequestTraceViewer2
             {
                 File.Copy(System.IO.Path.GetDirectoryName(item.sFilePath) + "\\freb.xsl", System.IO.Path.GetTempPath() + "\\freb.xsl");
             }
-            catch (Exception eek)
+            catch (Exception eeek)
             {
                 // ignore all exceptions -- whether source file doesn't exist, or target file already exists.
             }
@@ -183,20 +211,98 @@ namespace FailedRequestTraceViewer2
             {
                 File.Copy(System.IO.Path.GetDirectoryName(item.sFilePath) + "\\freb.xsl", System.IO.Path.GetTempPath() + "\\freb.xsl");
             }
-            catch (Exception eek)
+            catch (Exception eeek)
             {
                 // ignore all exceptions -- whether source file doesn't exist, or target file already exists.
             }
             System.Diagnostics.Process.Start(sTempFile);
             // Some operations with this row
         }
+        private void mnuCaptureTraffic_Click(object sender, RoutedEventArgs e)
+        {
+            CaptureTraffic = ((MenuItem)e.Source).IsChecked;
+
+            //MessageBox.Show("Not Implemented!");
+        }
+        private void mnuImportFolder_Click(object sender, RoutedEventArgs e)
+        {
+            SortedDictionary<DateTime, string> filesSortedByDate = new SortedDictionary<DateTime, string>();
+
+            System.Windows.Forms.FolderBrowserDialog folderToAdd = new System.Windows.Forms.FolderBrowserDialog();
+            folderToAdd.ShowNewFolderButton = true;
+            folderToAdd.Description = "Select folder to import Failed Request Trace logs...";
+            // Default to the My Documents folder.
+            folderToAdd.RootFolder = Environment.SpecialFolder.MyComputer;
+
+            System.Windows.Forms.DialogResult result = folderToAdd.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                var xmlFiles = Directory.EnumerateFiles(folderToAdd.SelectedPath, "*.xml", SearchOption.TopDirectoryOnly);
+                foreach (string currentFile in xmlFiles)
+                {
+                    FailedRequestTraceFile frtTraceFile;
+                    FRTUtil boo = new FRTUtil();
+                    if (boo.GenerateFRTObjectFromFile(currentFile, out frtTraceFile))
+                    {
+                        DateTime creationtime = frtTraceFile.sTime; // DateTime.Parse(frtTraceFile.sTime);
+
+                        // Resolve conflict if two different requests have the same time stamp
+                        // Note that this is only important during initial import... 
+                        //  once historical files are imported, new files will be added sequentially.
+                        while (filesSortedByDate.ContainsKey(creationtime))
+                        {
+                            creationtime += new TimeSpan(0, 0, 0, 0, 1);
+                        }
+                        filesSortedByDate.Add(creationtime, frtTraceFile.sFilePath);
+                    }
+                }
+                foreach (DateTime abc in filesSortedByDate.Keys)
+                {
+                    AddFailedRequestTraceFileToGrid(filesSortedByDate[abc]);
+                }
+
+                //lock (lockAddToObservableCollection)
+                //{
+                //    AddFailedRequestTraceFileToGrid(currentFile);
+                //}
+
+            }
+        }
+
+
+private void mnuExit_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Not Implemented!");
+        }
+        private void mnuClearView_Click(object sender, RoutedEventArgs e)
+        {
+            lock (lockAddToObservableCollection)
+            {
+                _syncContext.Post(o => FailedRequestTracesInGrid.Clear(), null);
+
+            }
+            //   MessageBox.Show("Not Implemented!");
+        }
+        private void mnuEditColumns_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Not Implemented!");
+        }
+        private void mnuViewWebview_Click(object sender, RoutedEventArgs e)
+        {
+            fWebviewVisible = ((MenuItem)e.Source).IsChecked;
+            //wpfBrowserBorder.Visibility = fWebviewVisible ? Visibility.Visible : Visibility.Hidden;
+            //MessageBox.Show("Not Implemented!");
+            resize_controls();
+        }
         public MainWindow()
         {
             _syncContext = SynchronizationContext.Current;
 
+            _foldernotificationhelper.WatchCallback = WatchOnChanged;
+
             lockAddToObservableCollection = new Object();
             InitializeComponent();
-            bool fBreakPoint = true;
+            //bool fBreakPoint = true;
 
             
             // [begin] turn off script errors on web browser
@@ -213,7 +319,10 @@ namespace FailedRequestTraceViewer2
             FailedRequestTracesInGrid = new ObservableCollection<FailedRequestTraceFile>();
             wpfGrid.DataContext = this;
             //wpfGrid.SetBinding()
-            if (!frtfolders.GetFailedRequestLocations())
+
+            _foldernotificationhelper.RefreshIISFolders();
+
+/*            if (!frtfolders.GetFailedRequestLocations())
             {
                 Close();
                 return;
@@ -247,10 +356,11 @@ namespace FailedRequestTraceViewer2
                 }
             }
 
+    */
             //frtdata.ItemsSource = null;
             //frtdata.ItemsSource = FailedRequestTracesInGrid;
 
-            fBreakPoint = false;
+            //fBreakPoint = false;
             //frtfolders.ImportFailedRequestTraceFile("c:\\Users\\brianc\\Desktop\\15.xml");
         }
         public void HideScriptErrors(WebBrowser wb, bool Hide)
