@@ -1,6 +1,8 @@
 # FailedRequestTraceViewer
 Windows program for more easily viewing Failed Request Trace files (WPF) 
 
+![Alt text](/failed-request-trace-viewer.png?raw=true "screenshot")
+
 This is the second version uploaded, very rough but hopefully adds value.
 
 The program will start listening for requests from IIS Failed Request Trace folders.  Note also that despite IIS configuration of how many requests to save, the program will start caching them in memory, and therefore the number of requests that the program loads is potentially unlimited.  Once the program ends, you won't be able to see those requests again if they are no longer on the hard drive.  As a result, do not leave this running and forget about it, or it will end up consuming all the memory.
