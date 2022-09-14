@@ -228,14 +228,14 @@ namespace FailedRequestTraceViewer2
         {
             SortedDictionary<DateTime, string> filesSortedByDate = new SortedDictionary<DateTime, string>();
 
-            System.Windows.Forms.FolderBrowserDialog folderToAdd = new System.Windows.Forms.FolderBrowserDialog();
+            Ookii.Dialogs.Wpf.VistaFolderBrowserDialog folderToAdd = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
             folderToAdd.ShowNewFolderButton = true;
             folderToAdd.Description = "Select folder to import Failed Request Trace logs...";
             // Default to the My Documents folder.
             folderToAdd.RootFolder = Environment.SpecialFolder.MyComputer;
 
-            System.Windows.Forms.DialogResult result = folderToAdd.ShowDialog();
-            if (result == System.Windows.Forms.DialogResult.OK)
+            bool? result = folderToAdd.ShowDialog();
+            if (result == true)
             {
                 var xmlFiles = Directory.EnumerateFiles(folderToAdd.SelectedPath, "*.xml", SearchOption.TopDirectoryOnly);
                 foreach (string currentFile in xmlFiles)
