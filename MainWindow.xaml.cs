@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 //using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -17,6 +18,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Xml;
+using System.Xml.Xsl;
 
 namespace FailedRequestTraceViewer2
 {
@@ -32,6 +35,9 @@ namespace FailedRequestTraceViewer2
         public int iD = 1;
         public bool fWebviewVisible = true;
         bool _captureTraffic = true;
+        string sFrebXSL;
+        bool _IE_XSL_Mode = false;
+
         bool CaptureTraffic {
             get { return _captureTraffic; }
             set { _captureTraffic = value;
@@ -44,7 +50,7 @@ namespace FailedRequestTraceViewer2
         Object lockAddToObservableCollection;
         FRTUtil frtfolders = new FRTUtil();
         public ObservableCollection<FailedRequestTraceFile> FailedRequestTracesInGrid { get; set; }
-        Dictionary<string, FileSystemWatcher> watchedFolders = new Dictionary<string, FileSystemWatcher>();
+        //Dictionary<string, FileSystemWatcher> watchedFolders = new Dictionary<string, FileSystemWatcher>();
         //= new ObservableCollection<FailedRequestTraceFile>();
 
         // Define the event handlers.
@@ -165,56 +171,78 @@ namespace FailedRequestTraceViewer2
         }
         */
 
+        private string TraceItemToFile(FailedRequestTraceFile item)
+        {
+            string sTempFile;
+            string filecontent;
+
+            if (_IE_XSL_Mode)
+            {
+                filecontent = item.sFileContents;
+                sTempFile = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".xml";
+            }
+            else
+            {
+                filecontent = TransformXMLToHTML(item.sFileContents);
+                sTempFile = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".html";
+            }
+            //string sTempFile = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".xml";
+            File.WriteAllText(sTempFile, filecontent);
+
+            return sTempFile;
+        }
+
         private void Row_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            FailedRequestTraceFile item = (FailedRequestTraceFile) e.AddedItems[0];
             
-            string sTempFile = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".xml";
-            File.WriteAllText(sTempFile, item.sFileContents);
-            try
-            {
-                File.Copy(System.IO.Path.GetDirectoryName(item.sFilePath) + "\\freb.xsl", System.IO.Path.GetTempPath() + "\\freb.xsl");
-            }
-            catch (Exception eeek)
-            {
-                // ignore all exceptions -- whether source file doesn't exist, or target file already exists.
-            }
+            string sTempFile = (e.AddedItems.Count > 0)?TraceItemToFile((FailedRequestTraceFile)e.AddedItems[0]):"about:blank";
+
             wbSample.Navigate(sTempFile);
+        }
+
+        
+
+
+        private string TransformXMLToHTML(string inputXml)//, string xsltString)
+        {
+            if (string.IsNullOrEmpty(sFrebXSL))
+            {
+                try
+                {
+                    sFrebXSL = File.ReadAllText(System.IO.Path.GetTempPath() + "\\freb.xsl");
+                } catch(Exception eeek)
+                {
+                    return "";
+                }
+            }
+            XslCompiledTransform transform = new XslCompiledTransform();
+            using (XmlReader reader = XmlReader.Create(new StringReader(sFrebXSL)))
+            {
+                transform.Load(reader);
+            }
+            StringWriter results = new StringWriter();
+            using (XmlReader reader = XmlReader.Create(new StringReader(inputXml)))
+            {
+                transform.Transform(reader, null, results);
+            }
+            return results.ToString();
         }
 
 
         private void Row_Select(object sender, MouseButtonEventArgs e)
         {
             DataGridRow row = sender as DataGridRow;
-            FailedRequestTraceFile item = (FailedRequestTraceFile)row.Item;
-            string sTempFile = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".xml";
-            File.WriteAllText(sTempFile, item.sFileContents);
-            try
-            {
-                File.Copy(System.IO.Path.GetDirectoryName(item.sFilePath) + "\\freb.xsl", System.IO.Path.GetTempPath() + "\\freb.xsl");
-            }
-            catch (Exception eeek)
-            {
-                // ignore all exceptions -- whether source file doesn't exist, or target file already exists.
-            }
+
+            string sTempFile = TraceItemToFile((FailedRequestTraceFile)row.Item);
+
             wbSample.Navigate(sTempFile);
         }
 
         private void Row_DoubleClick(object sender, MouseButtonEventArgs e)
         {
             DataGridRow row = sender as DataGridRow;
-            FailedRequestTraceFile item = (FailedRequestTraceFile)row.Item;
+            string sTempFile = TraceItemToFile((FailedRequestTraceFile)row.Item);
 
-            string sTempFile = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".xml";
-            File.WriteAllText(sTempFile, item.sFileContents);
-            try
-            {
-                File.Copy(System.IO.Path.GetDirectoryName(item.sFilePath) + "\\freb.xsl", System.IO.Path.GetTempPath() + "\\freb.xsl");
-            }
-            catch (Exception eeek)
-            {
-                // ignore all exceptions -- whether source file doesn't exist, or target file already exists.
-            }
             System.Diagnostics.Process.Start(sTempFile);
             // Some operations with this row
         }
@@ -266,6 +294,17 @@ namespace FailedRequestTraceViewer2
                 //    AddFailedRequestTraceFileToGrid(currentFile);
                 //}
 
+                // if we don't have a freb.xsl in the user's temp folder,
+                // and if one exists in this path,
+                // copy to user's temp folder
+                if (!File.Exists(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "freb.xsl")))
+                {
+                    if (File.Exists(System.IO.Path.Combine(folderToAdd.SelectedPath, "freb.xsl")))
+                    {
+                        // copy freb.xsl over
+                        File.Copy(System.IO.Path.Combine(folderToAdd.SelectedPath, "freb.xsl"), System.IO.Path.Combine(System.IO.Path.GetTempPath(), "freb.xsl"));
+                    }
+                }
             }
         }
 
@@ -292,6 +331,35 @@ private void mnuExit_Click(object sender, RoutedEventArgs e)
             fWebviewVisible = ((MenuItem)e.Source).IsChecked;
             //wpfBrowserBorder.Visibility = fWebviewVisible ? Visibility.Visible : Visibility.Hidden;
             //MessageBox.Show("Not Implemented!");
+            resize_controls();
+        }
+
+        //mnuIE_XSL_Mode_Click
+        private void mnuIE_XSL_Mode_Click(object sender, RoutedEventArgs e)
+        {
+            _IE_XSL_Mode = ((MenuItem)e.Source).IsChecked;
+            resize_controls();
+        }
+        private void mnuViewFolders_Click(object sender, RoutedEventArgs e)
+        {
+            wpfMonitoredFolders.Visibility = ((MenuItem)e.Source).IsChecked?Visibility.Visible:Visibility.Collapsed;
+            wpfMonitorFolderList.Text = "";
+            
+            //foreach (string s in watchedFolders.Keys)
+            //{
+            //    wpfMonitorFolderList.Text = watchedFolders[s].Path + "\n" + wpfMonitorFolderList.Text;
+            //}
+            if (wpfMonitoredFolders.Visibility == Visibility.Visible) {
+                List<string> folders = _foldernotificationhelper.GetWatchedFolders();
+                foreach (string s in folders)
+                {
+                    wpfMonitorFolderList.Text = s + "\n" + wpfMonitorFolderList.Text;
+                }
+                //stacker_panel2.Visibility = Visibility.Collapsed;
+            } else
+            {
+                //stacker_panel2.Visibility = Visibility.Visible;
+            }
             resize_controls();
         }
         public MainWindow()
@@ -374,6 +442,20 @@ private void mnuExit_Click(object sender, RoutedEventArgs e)
             objComWebBrowser.GetType().InvokeMember(
                 "Silent", System.Reflection.BindingFlags.SetProperty, null, objComWebBrowser,
                 new object[] { Hide });
+        }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void wbSample_Navigating(object sender, NavigatingCancelEventArgs e)
+        {
+            dynamic activeX = this.wbSample.GetType().InvokeMember("ActiveXInstance",
+                            BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.NonPublic,
+                            null, this.wbSample, new object[] { });
+
+            activeX.Silent = true;
         }
     }
 

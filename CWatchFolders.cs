@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Microsoft.Web.Administration;
 
 namespace FailedRequestTraceViewer2
@@ -14,6 +15,16 @@ namespace FailedRequestTraceViewer2
         private Dictionary<string, FileSystemWatcher> _watchedFolders = new Dictionary<string, FileSystemWatcher>();
         public FileSystemEventHandler WatchCallback { set; get; }
 
+        public List<string> GetWatchedFolders()
+        {
+            List<string> folders = new List<string>();
+
+            foreach (string s in _watchedFolders.Keys)
+            {
+                folders.Add(_watchedFolders[s].Path);
+            }
+            return folders;
+        }
         // used for passing in function - may not be necessary
         //public delegate void WatchCallback(object source, FileSystemEventArgs e);
         private void WatchThisPath(string sPath, bool fWatch)
@@ -55,6 +66,17 @@ namespace FailedRequestTraceViewer2
 
                 _watchedFolders.Add(sPath, watch);
 
+                // if we don't have a freb.xsl in the user's temp folder,
+                    // and if one exists in this path,
+                        // copy to user's temp folder
+                if (!File.Exists(System.IO.Path.Combine(System.IO.Path.GetTempPath(),"freb.xsl")))
+                {
+                    if (File.Exists(System.IO.Path.Combine(sPath, "freb.xsl")))
+                    {
+                        // copy freb.xsl over
+                        File.Copy(System.IO.Path.Combine(sPath, "freb.xsl"), System.IO.Path.Combine(System.IO.Path.GetTempPath(), "freb.xsl"));
+                    }
+                }
             }
             return;
         }
@@ -113,9 +135,15 @@ namespace FailedRequestTraceViewer2
                     }
                 }
             }
+            catch (System.UnauthorizedAccessException eeek)
+            {
+                MessageBox.Show("Insufficient permission to determine IIS Failed Request locations.  Please run as administrator.", "Warning");
+            }
             catch (Exception eeek)
             {
                 // ignore exceptions
+                MessageBox.Show("Error retrieving IIS Failed Request locations.\n\nException: " + eeek.Message, "ERROR");
+
             }
             return listToReturn;
 
