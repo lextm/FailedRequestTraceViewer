@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Microsoft.Web.Administration;
+//using Microsoft.Web.Administration;
 
 namespace FailedRequestTraceViewer2
 {
@@ -122,18 +122,18 @@ namespace FailedRequestTraceViewer2
             List<string> listToReturn = new List<string>();
             try
             {
-                ServerManager thisIIS = new ServerManager();
-                if (thisIIS.Sites.Count() != 0)
-                {
-                    foreach (Site site in thisIIS.Sites)
-                    {
-                        if ((site.TraceFailedRequestsLogging.Directory.Length > 0)
-                            && Directory.Exists(Environment.ExpandEnvironmentVariables(site.TraceFailedRequestsLogging.Directory)))
-                        {
-                            listToReturn.Add(Environment.ExpandEnvironmentVariables(site.TraceFailedRequestsLogging.Directory));
-                        }
-                    }
-                }
+                //ServerManager thisIIS = new ServerManager();
+                //if (thisIIS.Sites.Count() != 0)
+                //{
+                //    foreach (Site site in thisIIS.Sites)
+                //    {
+                //        if ((site.TraceFailedRequestsLogging.Directory.Length > 0)
+                //            && Directory.Exists(Environment.ExpandEnvironmentVariables(site.TraceFailedRequestsLogging.Directory)))
+                //        {
+                //            listToReturn.Add(Environment.ExpandEnvironmentVariables(site.TraceFailedRequestsLogging.Directory));
+                //        }
+                //    }
+                //}
             }
             catch (System.UnauthorizedAccessException eeek)
             {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Web.Administration;
+//using Microsoft.Web.Administration;
 using System.Windows.Forms;
 using System.IO;
 using System.Xml;
@@ -88,43 +88,43 @@ namespace FailedRequestTraceViewer2
         {
             try
             {
-                ServerManager thisIIS = new ServerManager();
-                if (thisIIS.Sites.Count() == 0)
-                {
-                    MessageBox.Show("There are no IIS sites!", "ERROR");
-                    return false;
-                }
+   //             ServerManager thisIIS = new ServerManager();
+   //             if (thisIIS.Sites.Count() == 0)
+   //             {
+   //                 MessageBox.Show("There are no IIS sites!", "ERROR");
+   //                 return false;
+   //             }
 
-                if (MessageBox.Show(
-        // message description
-        "Do you want to add Failed Request Trace locations based on this computer's local IIS configuration? (note, UI will be updated as new traces appear automatically)",
-        // caption
-        "",
-        // button options
-        MessageBoxButtons.YesNo
+   //             if (MessageBox.Show(
+   //     // message description
+   //     "Do you want to add Failed Request Trace locations based on this computer's local IIS configuration? (note, UI will be updated as new traces appear automatically)",
+   //     // caption
+   //     "",
+   //     // button options
+   //     MessageBoxButtons.YesNo
 
-   ) == DialogResult.Yes)
-                {
-                    foreach (Site site in thisIIS.Sites)
-                    {
-                        if ((site.TraceFailedRequestsLogging.Directory.Length > 0)
-                            && Directory.Exists(Environment.ExpandEnvironmentVariables(site.TraceFailedRequestsLogging.Directory)))
-                        {
-                            //if (MessageBox.Show(
-                            //        // message description
-                            //        "Show failed trace requests for site " + site.Name + "?  (Logging is " + (site.TraceFailedRequestsLogging.Enabled ? "enabled" : "disabled") + ")",
-                            //        // caption
-                            //        "Add IIS Location",
-                            //        // button options
-                            //        MessageBoxButtons.YesNo
+   //) == DialogResult.Yes)
+   //             {
+   //                 foreach (Site site in thisIIS.Sites)
+   //                 {
+   //                     if ((site.TraceFailedRequestsLogging.Directory.Length > 0)
+   //                         && Directory.Exists(Environment.ExpandEnvironmentVariables(site.TraceFailedRequestsLogging.Directory)))
+   //                     {
+   //                         //if (MessageBox.Show(
+   //                         //        // message description
+   //                         //        "Show failed trace requests for site " + site.Name + "?  (Logging is " + (site.TraceFailedRequestsLogging.Enabled ? "enabled" : "disabled") + ")",
+   //                         //        // caption
+   //                         //        "Add IIS Location",
+   //                         //        // button options
+   //                         //        MessageBoxButtons.YesNo
 
-                            //   ) == DialogResult.Yes)
-                            //{
-                                frtIISFolderPaths.Add(Environment.ExpandEnvironmentVariables(site.TraceFailedRequestsLogging.Directory));
-                            //}
-                        }
-                    }
-                }
+   //                         //   ) == DialogResult.Yes)
+   //                         //{
+   //                             frtIISFolderPaths.Add(Environment.ExpandEnvironmentVariables(site.TraceFailedRequestsLogging.Directory));
+   //                         //}
+   //                     }
+   //                 }
+   //             }
 
 
             }
